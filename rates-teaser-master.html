@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
+<title>Staircase — best mortgage rates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-950:#001522; --navy-900:#00263E; --lime-500:#C1FF72;
+    --green-500:#6BA539; --green-600:#5B8F30; --stale:#f0a08c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:var(--navy-950);font-family:Poppins,'Segoe UI',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+
+  .band{min-height:100%;display:flex;align-items:center;padding:44px 56px}
+  .inner{width:100%;max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:56px}
+
+  .lede{flex:0 0 320px;display:flex;flex-direction:column;align-items:flex-start;gap:18px}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;
+         background:rgba(193,255,114,.12);border:1px solid rgba(193,255,114,.28)}
+  .badge i{width:7px;height:7px;border-radius:999px;background:var(--lime-500);flex:none}
+  .badge span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--lime-500);font-weight:700;white-space:nowrap}
+  .badge.stale{background:rgba(240,160,140,.12);border-color:rgba(240,160,140,.35)}
+  .badge.stale i{background:var(--stale)}
+  .badge.stale span{color:var(--stale)}
+
+  h2{margin:0;font-size:38px;line-height:1.12;font-weight:600;letter-spacing:-.02em;color:#fff}
+  .sub{margin:0;font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);max-width:330px}
+  .row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .cta{display:inline-block;text-decoration:none;font-size:15px;font-weight:600;color:#fff;
+       background:var(--green-500);padding:14px 26px;border-radius:999px;white-space:nowrap;
+       transition:background .18s cubic-bezier(.2,0,0,1),transform .18s cubic-bezier(.2,0,0,1)}
+  .cta:hover{background:var(--green-600)}
+  .cta:active{transform:translateY(1px)}
+  .cta:focus-visible{outline:3px solid rgba(107,165,57,.45);outline-offset:2px}
+  .stamp{font-size:13px;color:rgba(255,255,255,.42)}
+
+  .tiles{flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:14px;min-width:0}
+  .tile{border-radius:14px;padding:18px 16px;background:rgba(255,255,255,.045);
+        border:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;gap:6px;min-width:0}
+  .tile .term{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+  .tile .rate{font-size:27px;line-height:1;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+  .tile .bank{font-size:13px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* The cheapest term on the strip gets the lime treatment. */
+  .tile.best{background:rgba(193,255,114,.10);border-color:rgba(193,255,114,.30)}
+  .tile.best .rate{color:var(--lime-500)}
+  .tile.best .bank{color:rgba(193,255,114,.75)}
+
+  .tile.skel .rate,.tile.skel .bank{color:transparent;background:rgba(255,255,255,.07);border-radius:5px}
+  .tile.skel .rate{height:27px;width:78%} .tile.skel .bank{height:13px;width:58%}
+
+  .err{flex:1;font-size:15px;color:rgba(255,255,255,.6)}
+
+  /* ---- Wix Studio breakpoints ---- */
+  @media (max-width:1000px){
+    .band{padding:34px 28px}
+    .inner{flex-direction:column;align-items:flex-start;gap:26px}
+    .lede{flex:none;width:100%}
+    h2{font-size:30px}
+    .sub{max-width:none}
+    .tiles{width:100%;grid-template-columns:repeat(3,1fr);gap:12px}
+  }
+  @media (max-width:750px){
+    .band{padding:26px 20px}
+    h2{font-size:26px}
+    .tiles{grid-template-columns:repeat(2,1fr);gap:10px}
+    .tile{padding:14px 13px}
+    .tile .rate{font-size:23px}
+    .cta{width:100%;text-align:center}
+    .row{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="band">
+  <div class="inner">
+    <div class="lede">
+      <div class="badge" id="badge"><i></i><span id="badgeText">Loading</span></div>
+      <h2>Today&rsquo;s best mortgage rates</h2>
+      <p class="sub">The lowest advertised rate across eight New Zealand banks.</p>
+      <div class="row">
+        <a class="cta" href="https://www.staircase.co.nz/mortgage-rates" target="_top">See the full board</a>
+        <span class="stamp" id="stamp"></span>
+      </div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var API = 'https://ratesapi.nz/api/v1/mortgage-rates';
+
+/* Same eight banks and the same product whitelist as the full board.
+   The whitelist is load-bearing: the feed carries green and renovation
+   top-up products at token rates (Westpac Greater Choices 5yr = 0.00%,
+   ANZ Good Energy = 1.00%, ASB Better Homes Top Up = 1.00%). A naive
+   minimum would put 0.00% on the homepage. */
+var BANK_CFG = [
+  {id:'institution:anz',               name:'ANZ',          products:['Standard','Special']},
+  {id:'institution:asb',               name:'ASB',          products:['Standard']},
+  {id:'institution:bnz',               name:'BNZ',          products:['Standard']},
+  {id:'institution:kiwibank',          name:'Kiwibank',     products:['Standard','Special']},
+  {id:'institution:westpac',           name:'Westpac',      products:['Standard','Special']},
+  {id:'institution:tsb-bank',          name:'TSB',          products:['Standard','Special']},
+  {id:'institution:co-operative-bank', name:'Co-operative', products:['Standard','Owner Occupied']},
+  {id:'institution:sbs-bank',          name:'SBS',          products:['Residential','Special']}
+];
+
+var TERMS = [
+  {key:'floating', label:'Floating', api:'Variable floating'},
+  {key:'m6',       label:'6 mth',    api:'6 months'},
+  {key:'y1',       label:'1 yr',     api:'1 year'},
+  {key:'y2',       label:'2 yr',     api:'2 years'},
+  {key:'y3',       label:'3 yr',     api:'3 years'},
+  {key:'y5',       label:'5 yr',     api:'5 years'}
+];
+var API_TERM = {}; TERMS.forEach(function(t){ API_TERM[t.api] = t.key; });
+
+var STALE_DAYS = 5;
+
+function byId(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function parseTs(s){
+  if(!s) return null;
+  var d = new Date(String(s).replace(' ','T') + (/[Zz]|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z'));
+  return isNaN(d.getTime()) ? null : d;
+}
+function fmtDate(d){
+  var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function skeleton(){
+  byId('tiles').innerHTML = TERMS.map(function(t){
+    return '<div class="tile skel"><span class="term">' + esc(t.label) +
+           '</span><span class="rate">0.00%</span><span class="bank">Bank</span></div>';
+  }).join('');
+}
+
+/* Best rate per term across the whitelisted products. */
+function bestPerTerm(payload){
+  var byInst = {};
+  (payload.data || []).forEach(function(i){ byInst[i.id] = i; });
+
+  var best = {};
+  BANK_CFG.forEach(function(cfg){
+    var inst = byInst[cfg.id];
+    if(!inst) return;
+    (inst.products || []).forEach(function(p){
+      if(cfg.products.indexOf(p.name) === -1) return;
+      (p.rates || []).forEach(function(r){
+        var k = API_TERM[r.term];
+        if(!k) return;
+        if(typeof r.rate !== 'number' || r.rate <= 0) return;
+        if(!best[k] || r.rate < best[k].rate) best[k] = {rate:r.rate, bank:cfg.name};
+      });
+    });
+  });
+  return best;
+}
+
+function render(best, updated){
+  var keys = TERMS.filter(function(t){ return best[t.key]; });
+  if(!keys.length) return fail();
+
+  var lowest = null;
+  keys.forEach(function(t){ if(lowest === null || best[t.key].rate < best[lowest].rate) lowest = t.key; });
+
+  byId('tiles').innerHTML = TERMS.map(function(t){
+    var b = best[t.key];
+    if(!b) return '<div class="tile"><span class="term">' + esc(t.label) +
+                  '</span><span class="rate">&mdash;</span><span class="bank">&nbsp;</span></div>';
+    return '<div class="tile' + (t.key === lowest ? ' best' : '') + '">' +
+           '<span class="term">' + esc(t.label) + '</span>' +
+           '<span class="rate">' + b.rate.toFixed(2) + '%</span>' +
+           '<span class="bank">' + esc(b.bank) + '</span></div>';
+  }).join('');
+
+  /* No "live" claim. The upstream scrape is advertised as hourly but runs
+     days behind in practice, so state the real age and flag it when stale. */
+  var badge = byId('badge'), txt = byId('badgeText');
+  if(!updated){
+    badge.className = 'badge stale'; txt.textContent = 'Update time unknown';
+    byId('stamp').textContent = '';
+    return;
+  }
+  var age = Math.floor((new Date() - updated) / 86400000);
+  badge.className = 'badge' + (age > STALE_DAYS ? ' stale' : '');
+  txt.textContent = age > STALE_DAYS ? ('No update in ' + age + ' days')
+                  : age <= 0 ? 'Updated today'
+                  : age === 1 ? 'Updated yesterday'
+                  : ('Updated ' + age + ' days ago');
+  byId('stamp').textContent = 'As at ' + fmtDate(updated);
+}
+
+function fail(){
+  byId('tiles').innerHTML = '<div class="err">Rates are unavailable right now.</div>';
+  byId('badge').className = 'badge stale';
+  byId('badgeText').textContent = 'Unavailable';
+  byId('stamp').textContent = '';
+}
+
+function load(){
+  skeleton();
+  fetch(API, {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(j){ render(bestPerTerm(j), parseTs(j.lastUpdated)); })
+    .catch(fail);
+}
+
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+else load();
+
+setInterval(load, 1800000);   // refresh if the tab stays open
+
+})();
+</script>
+</body>
+</html>
